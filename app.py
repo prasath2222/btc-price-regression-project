@@ -23,7 +23,9 @@ st_autorefresh(
 # PAGE TITLE
 # =====================================
 
-st.title("BTC Price Regression Dashboard")
+st.title(
+    "BTC Price Regression Dashboard"
+)
 
 
 
@@ -32,7 +34,10 @@ st.title("BTC Price Regression Dashboard")
 # =====================================
 
 model = pickle.load(
-    open("btc_regression_model.pkl", "rb")
+    open(
+        "btc_regression_model.pkl",
+        "rb"
+    )
 )
 
 
@@ -50,12 +55,32 @@ df = yf.download(
 
 
 # =====================================
+# CHECK DOWNLOAD
+# =====================================
+
+if df.empty:
+
+    st.error(
+        "Failed to download BTC data"
+    )
+
+    st.stop()
+
+
+
+# =====================================
 # FIX MULTI INDEX
 # =====================================
 
-if isinstance(df.columns, pd.MultiIndex):
+if isinstance(
+    df.columns,
+    pd.MultiIndex
+):
 
-    df.columns = df.columns.get_level_values(0)
+    df.columns = (
+        df.columns
+        .get_level_values(0)
+    )
 
 
 
@@ -63,7 +88,9 @@ if isinstance(df.columns, pd.MultiIndex):
 # RESET INDEX
 # =====================================
 
-df.reset_index(inplace=True)
+df.reset_index(
+    inplace=True
+)
 
 
 
@@ -77,7 +104,7 @@ df = df[[
     "Low",
     "Close",
     "Volume"
-]]
+]].copy()
 
 
 
@@ -95,10 +122,9 @@ for col in df.columns:
 
 
 # =====================================
-# TECHNICAL INDICATORS
+# RSI
 # =====================================
 
-# RSI
 df["RSI"] = ta.momentum.RSIIndicator(
     close=df["Close"],
     window=14
@@ -106,18 +132,28 @@ df["RSI"] = ta.momentum.RSIIndicator(
 
 
 
+# =====================================
 # MACD
+# =====================================
+
 macd = ta.trend.MACD(
     close=df["Close"]
 )
 
-df["MACD"] = macd.macd()
+df["MACD"] = (
+    macd.macd()
+)
 
-df["MACD_SIGNAL"] = macd.macd_signal()
+df["MACD_SIGNAL"] = (
+    macd.macd_signal()
+)
 
 
 
+# =====================================
 # EMA 20
+# =====================================
+
 df["EMA_20"] = ta.trend.EMAIndicator(
     close=df["Close"],
     window=20
@@ -125,7 +161,10 @@ df["EMA_20"] = ta.trend.EMAIndicator(
 
 
 
+# =====================================
 # EMA 50
+# =====================================
+
 df["EMA_50"] = ta.trend.EMAIndicator(
     close=df["Close"],
     window=50
@@ -133,7 +172,10 @@ df["EMA_50"] = ta.trend.EMAIndicator(
 
 
 
+# =====================================
 # SMA 20
+# =====================================
+
 df["SMA_20"] = ta.trend.SMAIndicator(
     close=df["Close"],
     window=20
@@ -141,14 +183,20 @@ df["SMA_20"] = ta.trend.SMAIndicator(
 
 
 
+# =====================================
 # RETURNS
+# =====================================
+
 df["Returns"] = (
     df["Close"].pct_change()
 )
 
 
 
+# =====================================
 # VOLATILITY
+# =====================================
+
 df["Volatility"] = (
     df["High"] - df["Low"]
 ) / df["Close"]
@@ -159,7 +207,21 @@ df["Volatility"] = (
 # DROP NAN
 # =====================================
 
-df.dropna(inplace=True)
+df = df.dropna()
+
+
+
+# =====================================
+# CHECK EMPTY
+# =====================================
+
+if df.empty:
+
+    st.error(
+        "No data available after indicators"
+    )
+
+    st.stop()
 
 
 
@@ -183,7 +245,7 @@ latest = df[[
 
 
 # =====================================
-# PREDICTION
+# PREDICT PRICE
 # =====================================
 
 predicted_price = model.predict(
@@ -203,11 +265,12 @@ current_price = float(
 
 
 # =====================================
-# PRICE DIFFERENCE
+# DIFFERENCE
 # =====================================
 
 difference = (
-    predicted_price - current_price
+    predicted_price
+    - current_price
 )
 
 
@@ -234,7 +297,7 @@ st.metric(
 
 
 # =====================================
-# PREDICTION RESULT
+# RESULT
 # =====================================
 
 if predicted_price > current_price:
@@ -252,10 +315,12 @@ else:
 
 
 # =====================================
-# CHARTS
+# CHART
 # =====================================
 
-st.subheader("BTC Close Price")
+st.subheader(
+    "BTC Close Price"
+)
 
 st.line_chart(
     df["Close"]
@@ -263,7 +328,13 @@ st.line_chart(
 
 
 
-st.subheader("RSI")
+# =====================================
+# RSI CHART
+# =====================================
+
+st.subheader(
+    "RSI"
+)
 
 st.line_chart(
     df["RSI"]
@@ -271,7 +342,13 @@ st.line_chart(
 
 
 
-st.subheader("MACD")
+# =====================================
+# MACD CHART
+# =====================================
+
+st.subheader(
+    "MACD"
+)
 
 st.line_chart(
     df[[
